@@ -1,0 +1,59 @@
+module conv1 (input clk, reset_n, start,
+              input reg signed [15:0] input_vec [0:7],
+              input reg signed [15:0] kernel    [0:2],
+              output reg signed [31:0] output_vec [0:5],
+              output reg DONE);
+localparam S0=3'b000, S1=3'b001, S2=3'b010, S3=3'b011, S4=3'b100;
+reg [2:0] curr_state, nxt_state;
+integer i;
+integer k;
+reg signed [31:0] acc;
+
+always @(posedge clk or negedge reset_n)
+begin
+  if (reset_n==0) begin 
+     curr_state <= S0;
+     i <= 0;
+     DONE <= 0;
+     acc <= 0;
+     
+for(k=0;k<6;k=k+1)
+    output_vec[k] <= 0;
+ end
+  else
+begin
+    curr_state <= nxt_state; 
+acc <= 32'd0;
+case(curr_state)
+S0 : i <= 0; 
+S1 : begin acc <= input_vec[i] * kernel[0] + input_vec[i+1] * kernel[1] + input_vec[i+2] * kernel[2];
+     end
+S2 : begin output_vec[i] <= acc;
+          i<=i+1; 
+     end
+
+endcase
+
+end
+end
+always @(*)
+begin
+nxt_state = curr_state; DONE = 1'd0;
+case(curr_state)
+S0 : begin if(start==1)
+     nxt_state = S1;
+     else nxt_state = S0; end
+S1 : begin nxt_state = S2;
+     end
+S2 : begin nxt_state = S3;
+     end
+S3 : begin if(i>5)  nxt_state = S4;
+           else  nxt_state = S1;
+     end
+S4 : begin DONE = 1'd1;
+     nxt_state = S0; end
+default :  nxt_state = S0;
+endcase
+end
+
+endmodule

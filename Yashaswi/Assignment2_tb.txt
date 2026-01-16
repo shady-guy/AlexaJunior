@@ -1,0 +1,79 @@
+`timescale 1ns/1ps
+
+module conv1_tb;
+
+  reg clk;
+  reg reset_n;
+  reg start;
+
+  reg signed [15:0] input_vec [0:7];
+  reg signed [15:0] kernel    [0:2];
+
+  wire signed [31:0] output_vec [0:5];
+  wire DONE;
+
+  // DUT instantiation
+  conv1 dut (
+    .clk(clk),
+    .reset_n(reset_n),
+    .start(start),
+    .input_vec(input_vec),
+    .kernel(kernel),
+    .output_vec(output_vec),
+    .DONE(DONE)
+  );
+
+  // Clock generation: 10 ns period
+  always #5 clk = ~clk;
+
+  integer i;
+
+  initial begin
+
+        $dumpfile("conv1_waveform.vcd");
+        $dumpvars(0,conv1_tb);
+    
+// Initialize signals
+    clk = 0;
+    reset_n = 0;
+    start = 0;
+
+    // Initialize input vector
+    input_vec[0] = 1;
+    input_vec[1] = 2;
+    input_vec[2] = 3;
+    input_vec[3] = 4;
+    input_vec[4] = 5;
+    input_vec[5] = 6;
+    input_vec[6] = 7;
+    input_vec[7] = 8;
+
+    // Initialize kernel
+    kernel[0] = 1;
+    kernel[1] = 1;
+    kernel[2] = 1;
+
+    // Apply reset
+    #12;
+    reset_n = 1;
+
+    // Start convolution
+    #10;
+    start = 1;
+    #10;
+    start = 0;
+
+    // Wait for DONE
+    wait (DONE == 1);
+
+    // Display outputs
+    $display("Convolution Output:");
+    for (i = 0; i < 6; i = i + 1) begin
+      $display("output_vec[%0d] = %0d", i, output_vec[i]);
+    end
+
+    #20;
+    $stop;
+  end
+
+endmodule

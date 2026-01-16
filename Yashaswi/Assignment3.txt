@@ -1,0 +1,71 @@
+module fc_layer (
+    input   clk,
+    input   reset_n,
+    input   start,
+
+    input  reg signed [15:0] input_vec [0:5],
+    input  reg signed [15:0] weights   [0:5][0:3],
+
+    output reg signed [31:0] output_vec [0:3],
+    output reg DONE
+);
+localparam S0=3'b000, S1=3'b001, S2=3'b010, S3=3'b011, S4=3'b100, S5=3'b101, S6=3'b110;
+reg [2:0] curr_state, nxt_state;
+integer i;
+integer j;
+integer k;
+reg signed [31:0] acc;
+always @(posedge clk or negedge reset_n)
+begin
+  if (reset_n==0) begin 
+     curr_state <= S0;
+     i <= 0;
+     j <= 0;
+     DONE <= 0;
+     acc <= 0;
+     
+for(k=0;k<4;k=k+1)
+    output_vec[k] <= 0;
+ end
+  else
+begin
+    curr_state <= nxt_state; 
+
+case(curr_state)
+S0 : DONE <= 1'd0;
+S1 : acc <= acc + input_vec[i] * weights[i][j];
+S2 : i <= i+1;
+S3 : output_vec[j] <= acc;
+S4 : begin
+         i <= 0;
+         j <= j+1;
+         acc <= 32'd0;
+      end
+S6 : DONE <= 1'd1;  
+endcase
+end
+end
+
+always @(*)
+begin
+nxt_state = curr_state; 
+case(curr_state)
+S0 : begin if(start==1)
+     nxt_state = S1;
+     else nxt_state = S0; end
+S1 : if (i==5)
+     nxt_state = S3;
+     else nxt_state = S2;
+S2 : nxt_state = S1;
+S3 : nxt_state = S4;
+S4 : nxt_state = S5;
+S5 : if (j<4)
+     nxt_state = S1;
+     else nxt_state = S6;
+S6 : begin 
+     nxt_state = S0; end
+default :  nxt_state = S0;
+endcase
+end
+
+endmodule

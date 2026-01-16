@@ -1,0 +1,65 @@
+`timescale 1ns/1ps
+
+module softmax_tb;
+
+  reg clk;
+  reg reset_n;
+  reg start;
+
+  reg signed [31:0] input_vec [0:3];
+  wire signed [31:0] output_vec [0:3];
+  wire DONE;
+
+  // Instantiate DUT
+  softmax dut (
+    .clk(clk),
+    .reset_n(reset_n),
+    .start(start),
+    .input_vec(input_vec),
+    .output_vec(output_vec),
+    .DONE(DONE)
+  );
+
+  // Clock generation: 10 ns period
+  always #5 clk = ~clk;
+
+  initial begin
+
+ $dumpfile("softmax_waveform.vcd");
+        $dumpvars(0, softmax_tb);
+
+    clk = 0;
+    reset_n = 0;
+    start = 0;
+
+    // Initialize inputs
+    input_vec[0] = 10;
+    input_vec[1] = 20;
+    input_vec[2] = 30;
+    input_vec[3] = 40;
+
+    // Apply reset
+    #20;
+    reset_n = 1;
+
+    // Start operation
+    #10;
+    start = 1;
+    #10;
+    start = 0;
+
+    // Wait for DONE
+    wait(DONE == 1);
+
+    // Display results
+    $display("---- OUTPUT ----");
+    $display("out[0] = %d", output_vec[0]);
+    $display("out[1] = %d", output_vec[1]);
+    $display("out[2] = %d", output_vec[2]);
+    $display("out[3] = %d", output_vec[3]);
+
+    #20;
+    $finish;
+  end
+
+endmodule

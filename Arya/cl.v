@@ -26,7 +26,7 @@ module cl
       mac     : nxt = next_k;
       next_k  : nxt = k_idx<3 ? mac : store;
       store   : nxt = next_out;
-      next_out: nxt = out_idx<5 ? init : done;
+      next_out: nxt = out_idx<6 ? init : done;
       done    : nxt = idle;
     endcase
   end
